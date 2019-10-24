@@ -559,7 +559,7 @@ Resources:
         MySQLEndPointAddress:
             !If
             - UseAurora
-            - !GetAtt RDSStack.Outputs.AuroraClusterEndpoint
+            - !GetAtt RDSStack.Outputs.AuroraClusterEndPoint
             - !GetAtt RDSStack.Outputs.RDSEndPointAddress
         ElastiCacheEndpoint: !GetAtt ElastiCache.Outputs.ElastiCacheEndpoint
         DNSName: !Ref DNSName
