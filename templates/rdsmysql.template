@@ -106,14 +106,19 @@ Parameters:
     Default: standard
     Description: The storage type associated with this database instance
     Type: String
-  RDSSecurityGroup:
+  CustomDBSecurityGroup:
     Description: MySql Security Group
     Type: AWS::EC2::SecurityGroup::Id
-  Subnets:
-    ConstraintDescription: must be list of existing subnet Ids
-    Description: Atleast two existing Subnets in separate Availability Zones your
-      Virtual Private Cloud (VPC)
-    Type: List<AWS::EC2::Subnet::Id>
+  Subnet1ID:
+    Description: The ID of the private subnet in Availability Zone 1.
+    Type: 'AWS::EC2::Subnet::Id'
+  Subnet2ID:
+    Description: The ID of the private subnet in Availability Zone 2.
+    Type: 'AWS::EC2::Subnet::Id'
+  VPCID:
+    Description: "ID of the VPC you are deploying into (e.g., vpc-0343606e)."
+    Type: 'AWS::EC2::VPC::Id'
+    Default: ''
 Conditions:
   IOPSStorageType:
     !Equals
@@ -124,7 +129,9 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnets available for the RDS MySQL DB Instance
-      SubnetIds: !Ref Subnets
+      SubnetIds:
+        - !Ref Subnet1ID
+        - !Ref Subnet2ID
   MySQLDB:
     Type: AWS::RDS::DBInstance
     Properties:
@@ -137,7 +144,7 @@ Resources:
       MasterUserPassword: !Ref DBMasterUserPassword
       DBSubnetGroupName: !Ref MySQLDBSubnetGroup
       VPCSecurityGroups:
-      - !Ref RDSSecurityGroup
+      - !Ref CustomDBSecurityGroup
       MultiAZ: !Ref DBMultiAZ
       StorageType: !Ref DBStorageType
       AutoMinorVersionUpgrade: !Ref DBAutoMinorVersionUpgrade

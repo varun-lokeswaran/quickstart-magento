@@ -35,9 +35,6 @@ Metadata:
       - DBMultiAZ
       - DBMasterUsername
       - DBMasterUserPassword
-      - DBAllocatedStorage
-      - DBStorageType
-      - DBIops
       - DBAutoMinorVersionUpgrade
       - DBBackupRetentionPeriod
     - Label:
@@ -86,8 +83,6 @@ Metadata:
         default: Bastion AMI OS
       BastionInstanceType:
         default: Bastion instance type
-      DBAllocatedStorage:
-        default: DB storage size (in GiB)
       DBAutoMinorVersionUpgrade:
         default: Automatic upgrade to new Amazon Aurora/MySQL minor versions
       DBBackupRetentionPeriod:
@@ -96,8 +91,6 @@ Metadata:
         default: DB engine
       DBInstanceClass:
         default: Amazon Aurora/MySQL DB instance type
-      DBIops:
-        default: DB IOPS
       DBMasterUserPassword:
         default: DB master password
       DBMasterUsername:
@@ -106,8 +99,6 @@ Metadata:
         default: Enable Multi-AZ deployment for DB instance
       DBName:
         default: DB name
-      DBStorageType:
-        default: DB storage type
       DNSName:
         default: Public DNS name
       ElastiCacheAutomaticFailover:
@@ -214,14 +205,6 @@ Parameters:
     Default: t2.micro
     Description: Amazon EC2 instance type for the bastion instances
     Type: String
-  DBAllocatedStorage:
-    ConstraintDescription: Must be between 5 and 4096 GiB. If Iops specified, AllocatedStorage
-      must be at least 100 GiB and with minimum Iops value of 1000
-    Default: '16'
-    Description: The size of the database in gigabytes (GiB)
-    MaxValue: '4096'
-    MinValue: '5'
-    Type: Number
   DBAutoMinorVersionUpgrade:
     AllowedValues:
     - 'true'
@@ -242,53 +225,48 @@ Parameters:
     Type: String
   DBInstanceClass:
     AllowedValues:
-    - db.t2.micro
-    - db.t2.small
-    - db.t2.medium
-    - db.t2.large
-    - db.m4.large
-    - db.m4.xlarge
+    - db.m1.large
+    - db.m1.medium
+    - db.m1.small
+    - db.m1.xlarge
+    - db.m2.2xlarge
+    - db.m2.4xlarge
+    - db.m2.xlarge
+    - db.m3.2xlarge
+    - db.m3.large
+    - db.m3.medium
+    - db.m3.xlarge
+    - db.m4.10xlarge
     - db.m4.2xlarge
     - db.m4.4xlarge
-    - db.m4.10xlarge
-    - db.r3.large
-    - db.r3.xlarge
+    - db.m4.large
+    - db.m4.xlarge
     - db.r3.2xlarge
     - db.r3.4xlarge
     - db.r3.8xlarge
-    - db.m3.medium
-    - db.m3.large
-    - db.m3.xlarge
-    - db.m3.2xlarge
-    - db.m2.xlarge
-    - db.m2.2xlarge
-    - db.m2.4xlarge
-    - db.m1.xlarge
-    - db.m1.small
-    - db.m1.medium
-    - db.m1.large
+    - db.r3.large
+    - db.r3.xlarge
+    - db.r4.16xlarge
+    - db.r4.2xlarge
+    - db.r4.4xlarge
+    - db.r4.8xlarge
+    - db.r4.large
+    - db.r4.xlarge
+    - db.r5.12xlarge
+    - db.r5.2xlarge
+    - db.r5.4xlarge
+    - db.r5.large
+    - db.r5.xlarge
     - db.t1.micro
+    - db.t2.large
+    - db.t2.medium
+    - db.t2.micro
+    - db.t2.small
     ConstraintDescription: Must select a valid database instance type.
-    Default: db.r3.2xlarge
+    Default: db.r4.large
     Description: The name of the compute and memory capacity class of the Amazon RDS
       (Aurora/MySQL) DB instance.
     Type: String
-  DBIops:
-    AllowedValues:
-    - '1000'
-    - '2000'
-    - '3000'
-    - '4000'
-    - '5000'
-    - '6000'
-    - '7000'
-    - '8000'
-    - '9000'
-    - '10000'
-    ConstraintDescription: '1000 Iops min and increased in 1K increments. '
-    Default: '1000'
-    Description: DB Iops. Used only when io1 specified for the StorageType property
-    Type: Number
   DBMasterUserPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
     ConstraintDescription: Must be at least 8 characters containing letters, numbers
@@ -324,14 +302,6 @@ Parameters:
     Description: Name of Magento Quick Start database.
     MaxLength: '64'
     MinLength: '5'
-    Type: String
-  DBStorageType:
-    AllowedValues:
-    - standard
-    - gp2
-    - io1
-    Default: gp2
-    Description: The storage type associated with this database instance
     Type: String
   DNSName:
     Default: ''
@@ -532,13 +502,17 @@ Rules:
     Assertions:
     - Assert:
         !Contains
-        - - db.r3.large
-          - db.r3.xlarge
-          - db.r3.2xlarge
-          - db.r3.4xlarge
-          - db.r3.8xlarge
-          - db.t2.small
-          - db.t2.medium
+        - - db.r5.12xlarge
+          - db.r5.4xlarge
+          - db.r5.2xlarge
+          - db.r5.xlarge
+          - db.r5.large
+          - db.r4.16xlarge
+          - db.r4.8xlarge
+          - db.r4.4xlarge
+          - db.r4.2xlarge
+          - db.r4.xlarge
+          - db.r4.large
         - !Ref DBInstanceClass
       AssertDescription: Amazon Aurora does not currently support this DB instance
         class.
@@ -610,16 +584,13 @@ Resources:
         AdminPassword: !Ref AdminPassword
         AdminUserName: !Ref AdminUserName
         DBEngineType: !Ref DBEngineType
-        DBAllocatedStorage: !Ref DBAllocatedStorage
         DBAutoMinorVersionUpgrade: !Ref DBAutoMinorVersionUpgrade
         DBBackupRetentionPeriod: !Ref DBBackupRetentionPeriod
         DBInstanceClass: !Ref DBInstanceClass
-        DBIops: !Ref DBIops
         DBMasterUserPassword: !Ref DBMasterUserPassword
         DBMasterUsername: !Ref DBMasterUsername
         DBMultiAZ: !Ref DBMultiAZ
         DBName: !Ref DBName
-        DBStorageType: !Ref DBStorageType
         DNSName: !Ref DNSName
         ElastiCacheAutomaticFailover: !Ref ElastiCacheAutomaticFailover
         ElastiCacheNodeType: !Ref ElastiCacheNodeType
