@@ -29,7 +29,7 @@
   },
   {
     "ParameterKey": "DBMasterUserPassword",
-    "ParameterValue": "$[taskcat_genpass_32]"
+    "ParameterValue": "Passw0rd1!"
   },
   {
     "ParameterKey": "AdminFirstName",
