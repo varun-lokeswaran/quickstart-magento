@@ -480,11 +480,7 @@ Rules:
     - Assert:
         !Not
         - !Contains
-          - - ap-south-1
-            - sa-east-1
-            - eu-north-1
-            - ap-east-1
-            - eu-west-3
+          - - ap-northeast-3
           - !Ref AWS::Region
       AssertDescription: Amazon EFS is not currently supported in this region
 Resources:
