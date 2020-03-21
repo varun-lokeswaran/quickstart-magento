@@ -60,7 +60,7 @@ cd /var/www/html/bin
 --admin-user=$adminuser --admin-password=$adminpassword --language=$magentolanguage \
 --currency=$magentocurrency --timezone=$magentotimezone $secure
 
-init_value=`head -n9 /var/www/html/app/etc/env.php`
+init_value=`head -n8 /var/www/html/app/etc/env.php`
 
 cat << EOF > /var/www/html/app/etc/env.php
 $init_value
