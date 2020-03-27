@@ -60,6 +60,7 @@ Metadata:
         default: AWS Quick Start Configuration
       Parameters:
       - QSS3BucketName
+      - QSS3BucketRegion
       - QSS3KeyPrefix
     ParameterLabels:
       AccessCIDR:
@@ -122,6 +123,8 @@ Metadata:
         default: Public subnet 2 ID
       QSS3BucketName:
         default: AWS Quick Start S3 bucket name
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket region
       QSS3KeyPrefix:
         default: AWS Quick Start S3 key prefix
       SSLCertificateId:
@@ -362,6 +365,10 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, and hyphens (-).
       It cannot start or end with a hyphen (-).
     Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
+    Type: String
   QSS3KeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
@@ -440,6 +447,7 @@ Conditions:
     !Equals
     - !Ref DBEngineType
     - Amazon Aurora
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
 Rules:
   AuroraDBInstanceTypeRule:
     RuleCondition:
@@ -487,7 +495,11 @@ Resources:
   SecurityGroupStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/securitygroups.template
+      TemplateURL:
+        !Sub
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/securitygroups.template'
+          - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+            S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AccessCIDR: !Ref AccessCIDR
         VPCID: !Ref VPCID
@@ -503,6 +515,8 @@ Resources:
             - UseAurora
             - submodules/quickstart-amazon-aurora-mysql/templates/aurora_mysql.template.yaml
             - templates/rdsmysql.template
+          S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         VPCID: !Ref VPCID
         CustomDBSecurityGroup: !GetAtt SecurityGroupStack.Outputs.MySQLRDSSecurityGroup
@@ -518,7 +532,11 @@ Resources:
   ElastiCache:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/elasticache.template
+      TemplateURL:
+        !Sub
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/elasticache.template'
+          - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+            S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         ElastiCacheSecurityGroup: !GetAtt SecurityGroupStack.Outputs.ElastiCacheSecurityGroup
         Subnet1ID: !Ref PrivateSubnet1ID
@@ -529,7 +547,11 @@ Resources:
   WebServerASGStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/webserver.template
+      TemplateURL:
+        !Sub
+          - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/webserver.template'
+          - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+            S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         KeyPair: !Ref KeyPairName
         ELBSecurityGroup: !GetAtt SecurityGroupStack.Outputs.ELBSecurityGroup
@@ -544,6 +566,7 @@ Resources:
         ElasticLoadBalancerSubnets: !Sub ${PublicSubnet1ID},${PublicSubnet2ID}
         VPCID: !Ref VPCID
         QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         MagentoCurrency: !Ref MagentoCurrency
         MagentoLanguage: !Ref MagentoLanguage
